@@ -1,24 +1,75 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { useAuth } from "@/ctx/AuthContext";
+import { useDeepLinking } from "@/hooks/use-deep-linking";
+import AuthProvider from "@/providers/AuthProvider";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { useFonts } from "expo-font";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, StatusBar, StyleSheet, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Toaster } from "sonner-native";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+function RootLayoutNav() {
+  const { loading, session, profile } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+  const [loaded] = useFonts({
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+  });
+  //handle deep linking
+  useDeepLinking();
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+  useEffect(() => {
+    if (!loading && session) {
+      if (!profile || !profile.onboarding_completed) {
+        const inOnboarding = segments[0] === "onboarding";
+        if (!inOnboarding) {
+          router.replace("/onboarding");
+        }
+      }
+    }
+  }, [session, loading, profile, segments]);
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  if (!loaded || loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="white" />
+      </View>
+    );
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
+    <ThemeProvider value={DefaultTheme}>
+      <GestureHandlerRootView style={styles.container}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="onboarding" />
+        </Stack>
+        <Toaster />
+        <StatusBar barStyle="default" />
+      </GestureHandlerRootView>
     </ThemeProvider>
   );
 }
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "black",
+  },
+});

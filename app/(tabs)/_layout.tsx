@@ -1,35 +1,52 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Colors } from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import React from "react";
+import { StyleSheet, useColorScheme } from "react-native";
+import { HapticTab }  from "@/components/haptic-tab";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
+const TabLayout = () => {
   const colorScheme = useColorScheme();
-
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
+   <Tabs
+   screenOptions={{
+    headerShown: false,
+    tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+    tabBarButton: HapticTab
+   }}
+   >
+   
+    <Tabs.Screen
+    name="lessons"
+    options={{
+      title: "Lessons",
+      tabBarIcon: ({ color, size }) => (
+        <Ionicons name="school" color={color} size={28} />
+      ),
+    }}
+    />
+    <Tabs.Screen
+    name="conversations"
+    options={{
+      title: "Conversations",
+      tabBarIcon: ({ color, size }) => (
+        <Ionicons name="chatbubbles-sharp" color={color} size={28} />
+      ),
+    }}
+    />
+    <Tabs.Screen
+    name="profile"
+    options={{
+      title: "Profile",
+      tabBarIcon: ({ color, size }) => (
+        <Ionicons name="person-circle-outline" color={color} size={28} />
+      ),
+    }}
+    />
+   </Tabs>
   );
-}
+};
+
+export default TabLayout;
+
+const styles = StyleSheet.create({});
