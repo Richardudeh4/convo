@@ -20,6 +20,9 @@
         "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/images/andIcon.png"
       },
+      "statusBar": {
+        "barStyle": "dark-content"
+      },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.richardstudio.convo"

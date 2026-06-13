@@ -1,11 +1,13 @@
 import { useAuth } from "@/ctx/AuthContext";
 import { useDeepLinking } from "@/hooks/use-deep-linking";
+import { useNetworkToast } from "@/hooks/use-network-toast";
 import AuthProvider from "@/providers/AuthProvider";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, StatusBar, StyleSheet, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Toaster } from "sonner-native";
 
@@ -18,6 +20,7 @@ function RootLayoutNav() {
   });
   //handle deep linking
   useDeepLinking();
+  useNetworkToast();
 
   useEffect(() => {
     if (!loading && session) {
@@ -48,7 +51,7 @@ function RootLayoutNav() {
           <Stack.Screen name="onboarding" />
         </Stack>
         <Toaster />
-        <StatusBar barStyle="default" />
+        <StatusBar style={Platform.OS === "android" ? "dark" : "auto"} />
       </GestureHandlerRootView>
     </ThemeProvider>
   );
