@@ -1,7 +1,7 @@
 import { Question } from "@/constants/CourseData";
 import { Colors } from "@/constants/theme";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ThemedText } from "../themed-text";
 import AudioWaveForm from "./AudioWaveForm";
 
@@ -121,13 +121,32 @@ Play audio once before response
     <ThemedText style={styles.revealButtonText}>Listening...</ThemedText>
   </Animated.View>
   </View>
-) : null
+) : showMandarin ? (
+  <TouchableOpacity onPress={onRevealMadarin}>
+    <Animated.View style={[styles.mandarinText, {opacity: fadeAnim}]}>
+<ThemedText style={styles.pinyin}>
+{currentQuestion.mandarin.pinyin}
+</ThemedText>
+<ThemedText style={[styles.hanzi, {color: Colors.subduedTextColor}]}>
+{currentQuestion.mandarin.hanzi}
+</ThemedText>
+    </Animated.View>
+  </TouchableOpacity>
+) : (currentQuestion.type !== "listening_mc" && (
+<TouchableOpacity style={styles.revealButton}
+ onPress={onRevealMadarin} hitSlop={{top: 10, bottom: 10, left: 20, right: 20}}>
+<ThemedText style={styles.instructionText}>
+  Tab here to reveal what was said
+</ThemedText>
+</TouchableOpacity>
+  )
+)
 )}
             </View>
         </>
     )
 } 
-
+ 
 const styles = StyleSheet.create({
     playButton: {
       width: 80,
