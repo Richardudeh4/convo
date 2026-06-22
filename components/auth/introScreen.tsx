@@ -5,12 +5,13 @@ import Animated, { Extrapolation, interpolate, useAnimatedStyle, useSharedValue,
 import {useVideoPlayer, VideoView} from "expo-video";
 import { useFonts } from 'expo-font';
 import { EBGaramond_500Medium_Italic } from '@expo-google-fonts/eb-garamond';
-import { NavigatorLockAcquireTimeoutError } from '@supabase/supabase-js';
 import { Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AntDesign, Fontisto } from '@expo/vector-icons';
 import EmailAuth from './emailAuth';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { signInWithOAuthProvider } from '@/lib/socialAuth';
+import { toast } from 'sonner-native';
 
 
 
@@ -42,13 +43,14 @@ const IntroScreen = () => {
   const insets = useSafeAreaInsets();
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
   const [currentView, setCurrentView] = useState<"login" | "email">("login");
-  const mainTextWords: string[] = ["Learn", "Mandarin", "the", "right", "way"];
+  const mainTextWords: string[] = ["Learn", "Spanish", "the", "right", "way"];
   const scriptPhrases: string[] = ["Speaking", "Listening", "Practising", "Conversing"];
   const [fontsLoaded] = useFonts({
     EBGaramond_500Medium_Italic,
   });
   const [isMenuOpen, setIsMenuOpen] = useState(false); 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [oauthLoading, setOauthLoading] = useState<"google" | "apple" | null>(null);
   const player = useVideoPlayer(videoSource, (player) =>{
     player.loop = true;
     player.muted = true;
@@ -187,7 +189,17 @@ const IntroScreen = () => {
       animateMenu(newState);
     }
 
-     
+    const handleOAuthSignIn = async (provider: "google" | "apple") => {
+      if (oauthLoading) return;
+      setOauthLoading(provider);
+      try {
+        await signInWithOAuthProvider(provider);
+      } catch (error: any) {
+        toast.error(error?.message ?? "Something went wrong. Please try again.");
+      } finally {
+        setOauthLoading(null);
+      }
+    };
 
     const renderLoginView = () => {
         return(
@@ -202,13 +214,27 @@ const IntroScreen = () => {
             </View>
             </View>
             <View style={styles.buttonsContainer}>
-            <Pressable style={styles.loginButton} onPress={() => console.log("logn button ")}>
-              <AntDesign name="apple" size={16} color="white" style={styles.appleIcon}/>
-              <Text style={styles.buttonText}>Continue with Apple</Text>
-            </Pressable>
-            <Pressable style={styles.loginButton} onPress={() => console.log("logn button ")}>
-              <AntDesign name="google" size={16} color="white" style={styles.appleIcon}/>
-              <Text style={styles.buttonText}>Continue with Google</Text>
+            {Platform.OS === "ios" && (
+              <Pressable
+                style={[styles.loginButton, oauthLoading === "apple" && styles.buttonDisabled]}
+                onPress={() => handleOAuthSignIn("apple")}
+                disabled={!!oauthLoading}
+              >
+                <AntDesign name="apple" size={16} color="white" style={styles.appleIcon}/>
+                <Text style={styles.buttonText}>
+                  {oauthLoading === "apple" ? "Signing in..." : "Continue with Apple"}
+                </Text>
+              </Pressable>
+            )}
+            <Pressable
+              style={[styles.loginButton, oauthLoading === "google" && styles.buttonDisabled]}
+              onPress={() => handleOAuthSignIn("google")}
+              disabled={!!oauthLoading}
+            >
+              <AntDesign name="google" size={16} color="white" style={styles.googleIcon}/>
+              <Text style={styles.buttonText}>
+                {oauthLoading === "google" ? "Signing in..." : "Continue with Google"}
+              </Text>
             </Pressable>
             <Pressable style={styles.loginButton} onPress={() => animateToEmailView("email")}>
               <Fontisto name="email" size={16} color="white" style={styles.emailIcon}/>
@@ -379,6 +405,9 @@ const styles = StyleSheet.create({
       fontSize: 17,
       fontWeight: "500",
       letterSpacing: -0.2,
+    },
+    buttonDisabled: {
+      opacity: 0.6,
     },
     heroTextContainer: {
       position: "absolute",

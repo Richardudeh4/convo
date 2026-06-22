@@ -14,7 +14,7 @@ export default function FlashCard({
   direction,
 }: {
   word: Word;
-  direction: "zh-en" | "en-zh";
+  direction: "tgt-en" | "en-tgt";
 }) {
   const [isFlipped, setIsFlipped] = useState(false);
   const flipAnimation = useRef(new Animated.Value(0)).current;
@@ -29,7 +29,7 @@ export default function FlashCard({
       tension: 52,
       useNativeDriver: true,
     }).start();
-  }, [word.hanzi, direction, entranceAnimation]);
+  }, [word.text, direction, entranceAnimation]);
 
   const frontRotateY = flipAnimation.interpolate({
     inputRange: [0, 180],
@@ -98,36 +98,36 @@ export default function FlashCard({
   };
 
   const renderFront = () => {
-    if (direction === "en-zh") {
+    if (direction === "en-tgt") {
       return (
         <ThemedText style={styles.englishFront}>{word.english}</ThemedText>
       );
     }
 
     return (
-      <View style={styles.mandarinContent}>
-        <ThemedText style={styles.pinyin}>{word.pinyin}</ThemedText>
-        <ThemedText style={styles.hanzi}>{word.hanzi}</ThemedText>
+      <View style={styles.targetContent}>
+        <ThemedText style={styles.targetText}>{word.text}</ThemedText>
+        <ThemedText style={styles.romanization}>{word.romanization}</ThemedText>
       </View>
     );
   };
 
   const renderBack = () => {
-    if (direction === "en-zh") {
+    if (direction === "en-tgt") {
       return (
-        <View style={styles.mandarinContent}>
-          <ThemedText style={[styles.pinyin, styles.mandarinBackText]}>
-            {word.pinyin}
+        <View style={styles.targetContent}>
+          <ThemedText style={[styles.targetText, styles.backText]}>
+            {word.text}
           </ThemedText>
-          <ThemedText style={[styles.hanzi, styles.mandarinBackText]}>
-            {word.hanzi}
+          <ThemedText style={[styles.romanization, styles.backText]}>
+            {word.romanization}
           </ThemedText>
         </View>
       );
     }
 
     return (
-      <ThemedText style={[styles.englishBack, styles.mandarinBackText]}>
+      <ThemedText style={[styles.englishBack, styles.backText]}>
         {word.english}
       </ThemedText>
     );
@@ -259,26 +259,27 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryAccentColor,
     opacity: 0.12,
   },
-  mandarinContent: {
+  targetContent: {
     justifyContent: "center",
     alignItems: "center",
     gap: 8,
     width: "100%",
   },
-  pinyin: {
-    fontSize: 40,
-    lineHeight: 48,
-    fontWeight: "600",
+  targetText: {
+    fontSize: 36,
+    lineHeight: 44,
+    fontWeight: "700",
     textAlign: "center",
     maxWidth: "90%",
   },
-  hanzi: {
-    fontSize: 30,
-    lineHeight: 36,
+  romanization: {
+    fontSize: 20,
+    lineHeight: 28,
     textAlign: "center",
     maxWidth: "90%",
+    color: Colors.subduedTextColor,
   },
-  mandarinBackText: {
+  backText: {
     color: "white",
   },
   englishFront: {

@@ -1,4 +1,5 @@
 import { AuthContext } from "@/ctx/AuthContext";
+import { getAllProgress, computeRank } from "@/lib/lessonProgress";
 import { supabase } from "@/utils/supabase";
 import { Session } from "@supabase/supabase-js";
 import { PropsWithChildren, useEffect, useState } from "react";
@@ -7,9 +8,14 @@ export default function AuthProvider({children}: PropsWithChildren){
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
+    const [rank, setRank] = useState(0);
 
     const premiumExpiresAt : string | null  = profile?.premium_expires_at ?? null;
     const isPremium = !!profile?.is_premium &&  (!premiumExpiresAt || new Date(premiumExpiresAt) > new Date());
+
+    useEffect(() => {
+        getAllProgress().then((progress) => setRank(computeRank(progress)));
+    }, []);
     const loadProfile = async(s: Session | null ) => {
         if(!s){
             setProfile(null);
@@ -40,7 +46,7 @@ export default function AuthProvider({children}: PropsWithChildren){
 }, []);
 
 return (
-    <AuthContext.Provider value={{session, user: session?.user ?? null, profile, loading, isAdmin :false, isPremium, premiumExpiresAt, refreshProfile}}>
+    <AuthContext.Provider value={{session, user: session?.user ?? null, profile, loading, isAdmin :false, isPremium, premiumExpiresAt, refreshProfile, rank}}>
         {children}
     </AuthContext.Provider>
 )

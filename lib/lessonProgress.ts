@@ -40,3 +40,20 @@ await writeProgress(progress);
 export const getAllProgress = async (): Promise<LessonProgress> => {
    return await readProgress();
 }
+
+/**
+ * Rank thresholds based on cumulative lessons completed with ≥1 star.
+ * 0 = A1  (default)
+ * 1 = A2  (unlock ch3-5)
+ * 2 = B1  (unlock ch6-8)
+ * 3 = B2  (unlock ch9-11)
+ * 4 = C1  (unlock ch12)
+ */
+export function computeRank(progress: LessonProgress): number {
+  const completedCount = Object.values(progress).filter((v) => v >= 1).length;
+  if (completedCount >= 35) return 4;
+  if (completedCount >= 21) return 3;
+  if (completedCount >= 14) return 2;
+  if (completedCount >= 7)  return 1;
+  return 0;
+}

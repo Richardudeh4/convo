@@ -94,7 +94,7 @@ isPlaying ?
                 <View style={styles.recordingDotLarge}></View>
                 </View>
                 <ThemedText style={styles.recordingText}>
-                    Recording...
+                    Listening...
                 </ThemedText>
             </View>) : <AudioWaveForm isPlaying={isPlaying} />}
 
@@ -103,7 +103,7 @@ isPlaying ?
 {selectedOption ? (
   <View style={styles.recordingPromptTop}>
 <ThemedText style={styles.recordingPromptText}>
-{isRecognizing ? "Record response" : "Tab to record"}
+{isRecognizing ? "Listening…" : "Tap and speak"}
 </ThemedText>
   </View>
 ) : (
@@ -125,10 +125,10 @@ Play audio once before response
   <TouchableOpacity onPress={onRevealMadarin}>
     <Animated.View style={[styles.mandarinText, {opacity: fadeAnim}]}>
 <ThemedText style={styles.pinyin}>
-{currentQuestion.mandarin.pinyin}
+{currentQuestion.target.romanization}
 </ThemedText>
 <ThemedText style={[styles.hanzi, {color: Colors.subduedTextColor}]}>
-{currentQuestion.mandarin.hanzi}
+{currentQuestion.target.text}
 </ThemedText>
     </Animated.View>
   </TouchableOpacity>
@@ -136,7 +136,7 @@ Play audio once before response
 <TouchableOpacity style={styles.revealButton}
  onPress={onRevealMadarin} hitSlop={{top: 10, bottom: 10, left: 20, right: 20}}>
 <ThemedText style={styles.instructionText}>
-  Tab here to reveal what was said
+  Tap to reveal the Spanish
 </ThemedText>
 </TouchableOpacity>
   )

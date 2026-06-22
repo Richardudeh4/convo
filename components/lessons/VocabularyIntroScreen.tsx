@@ -1,4 +1,4 @@
-import { Question, Word } from "@/constants/CourseData";
+import { Question, SpeakingOption, Word } from "@/constants/CourseData";
 import { Colors } from "@/constants/theme";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -11,7 +11,7 @@ import ProgressHeader from "./ProgressHeader";
 interface studyCard {
   key: string;
   word: Word;
-  direction: "zh-en" | "en-zh";
+  direction: "tgt-en" | "en-tgt";
 }
 
 interface DeckBuckets {
@@ -34,13 +34,15 @@ interface StudyState {
 const getUniqueWords = (questions: Question[]): Word[] => {
   const allWords = new Map<string, Word>();
   questions.forEach((question) => {
-    const wordSource =
+    const wordSource: (Word | undefined)[] =
       question.type === "listening_mc"
-        ? question?.mandarin?.words
-        : question?.options?.flatMap((opt) => opt.mandarin?.words);
+        ? (question?.target?.words ?? [])
+        : (question?.options?.flatMap((opt) =>
+            (opt as SpeakingOption).target?.words ?? []
+          ) ?? []);
     wordSource.forEach((word) => {
-      if (word && word.hanzi && !allWords.has(word.hanzi)) {
-        allWords.set(word.hanzi, word);
+      if (word && word.text && !allWords.has(word.text)) {
+        allWords.set(word.text, word);
       }
     });
   });
@@ -50,14 +52,14 @@ const getUniqueWords = (questions: Question[]): Word[] => {
 
 const buildDeck = (words: Word[]): DeckBuckets => {
   const recognition: studyCard[] = words.map((word) => ({
-    key: `${word.hanzi}-recognition`,
+    key: `${word.text}-recognition`,
     word,
-    direction: "zh-en",
+    direction: "tgt-en",
   }));
   const recall: studyCard[] = words.map((word) => ({
-    key: `${word.hanzi}-recall`,
+    key: `${word.text}-recall`,
     word,
-    direction: "en-zh",
+    direction: "en-tgt",
   }));
   return {
     recognition,

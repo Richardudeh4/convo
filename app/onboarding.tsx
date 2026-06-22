@@ -113,7 +113,7 @@ const saveProfile = async () => {
  const {error} = await supabase.from("profiles").upsert({
 id: user.id,
 full_name: name,
-chinese_level: level,
+spanish_level: level,
 motivation: motivation,
 interests: selectedInterests,
 onboarding_completed: true,
@@ -181,7 +181,7 @@ const toggleInterest = (interest: string) => {
     return (
       <View style={styles.stepContainer}>
         <ThemedText type="title" style={styles.title}>
-          How much chinese do you know?
+          How much Spanish do you know?
         </ThemedText>
         <ScrollView contentContainerStyle={{rowGap: 16}} style={{marginTop:20}}>
           {LEVELS.map((l) => (
@@ -202,7 +202,7 @@ const toggleInterest = (interest: string) => {
     return (
       <View style={styles.stepContainer}>
         <ThemedText type="title" style={styles.title}>
-          Why are you learning Chinese?
+          Why are you learning Spanish?
         </ThemedText>
         <ThemedText style={styles.subtitle}>Select all that apply</ThemedText>
         <ScrollView contentContainerStyle={{ rowGap: 16 }} style={{ marginTop: 20 }}>

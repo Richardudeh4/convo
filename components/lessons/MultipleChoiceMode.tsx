@@ -76,7 +76,7 @@ export default function MultipleChoiceMode({
             ]}
           >
             <ThemedText style={styles.sayItPrompt} type="subtitle">
-              Now say it in mandarin:
+              Now say it in Spanish:
             </ThemedText>
           </Animated.View>
         )}
@@ -111,8 +111,12 @@ export default function MultipleChoiceMode({
                     {option.english}
                   </ThemedText>
                   {isSelected && (
-                   <View style={styles.selectedIndicator}>
-                    <Ionicons size={22} name="mic-outline" color={Colors.primaryAccentColor} />
+                    <View style={styles.selectedIndicator}>
+                      <Ionicons
+                        size={22}
+                        name="mic-outline"
+                        color={Colors.primaryAccentColor}
+                      />
                     </View>
                   )}
                 </View>

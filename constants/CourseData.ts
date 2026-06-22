@@ -19,8 +19,8 @@ export interface ConversationScenario {
 }
 
 interface PhrasebookEntry {
-  hanzi: string;
-  pinyin: string;
+  text: string;
+  romanization: string;
   english: string;
 }
 
@@ -29,6 +29,8 @@ export interface Chapter {
   title: string;
   lessons: Lesson[];
   review?: Lesson;
+  minRank: number;
+  difficulty: "A1" | "A2" | "B1" | "B2" | "C1";
 }
 
 export interface Lesson {
@@ -43,20 +45,20 @@ interface BaseQuestion {
   id: number;
 }
 
-interface MandarinPrompt {
-  hanzi: string;
-  pinyin: string;
+export interface TargetPrompt {
+  text: string;
+  romanization: string;
 }
 
 export interface Word {
-  hanzi: string;
-  pinyin: string;
+  text: string;
+  romanization: string;
   english: string;
 }
 
-interface MandarinPhrase {
-  hanzi: string;
-  pinyin: string;
+interface TargetPhrase {
+  text: string;
+  romanization: string;
   words: Word[];
   breakdown: string;
 }
@@ -64,7 +66,7 @@ interface MandarinPhrase {
 export interface SpeakingOption {
   id: number;
   english: string;
-  mandarin: MandarinPhrase;
+  target: TargetPhrase;
 }
 
 export interface ListeningOption {
@@ -74,19 +76,20 @@ export interface ListeningOption {
 
 interface MultipleChoiceQuestion extends BaseQuestion {
   type: "multiple_choice";
-  mandarin: MandarinPrompt;
+  target: TargetPrompt;
   options: SpeakingOption[];
+  correctOptionId: number;
 }
 
 interface SingleResponseQuestion extends BaseQuestion {
   type: "single_response";
-  mandarin: MandarinPrompt;
+  target: TargetPrompt;
   options: [SpeakingOption];
 }
 
 interface ListeningMultipleChoiceQuestion extends BaseQuestion {
   type: "listening_mc";
-  mandarin: MandarinPrompt & {
+  target: TargetPrompt & {
     words: Word[];
     breakdown: string;
   };
@@ -101,98 +104,10 @@ export type Question =
 
 export const COURSE_DATA = courseData as unknown as CourseData;
 
-// import courseData from "@/assets/data/course_content.json";
-// import { Ionicons } from "@expo/vector-icons";
-
-// export interface Lesson {
-//     id: string;
-//     title: string;
-//     icon : keyof typeof Ionicons.glyphMap;
-//     completionCount: number;
-//     questions: Question[];
-// }
-
-// export interface Chapter {
-//     id: number;
-//     title: string;
-//     lessons: Lesson[];
-//     review?: Lesson;
-// }
-// export interface ConversationScenario {
-//     id: string;
-//     title: string;
-//     icon: keyof typeof Ionicons.glyphMap;
-//     isFree: boolean;
-//     description: string;
-//     goal: string;
-//     tasks: string[];
-//     difficulty: "Beginner" | "Intermediate" | "Advanced";
-//     phrasebook: PhrasebookEntry[];
-// }
-// export interface PhrasebookEntry {
-//     hanzi: string;
-//     pinyin: string;
-//     english: string;
-// }
-
-// export interface CourseData {
-//     chapters: Chapter[];
-//     scenarios: ConversationScenario[];
-// }
-// interface BaseQuestion {
-//     id: number;
-// } 
-// interface MandarinPrompt {
-//     hanzi: string;
-//     pinyin: string;
-// }
-// interface Word {
-//     hanzi: string;
-//     pinyin: string;
-//     english: string;
-// }
-// interface MandarinPhrase {
-//     hanzi: string;
-//     pinyin: string;
-//     words: Word[];
-//     breakdown: string;
-// }
-// interface SpeakingOption{
-//     id: number;
-//     english: string;
-//     mandarin: MandarinPhrase;
-// }
-// interface listeningOption{
-//     id: number;
-//     english: string;
-// }
-
-// interface MultipleChoiceQuestion extends BaseQuestion {
-//     type: "multiple_choice";
-//     mandarin: MandarinPrompt;
-//     options: SpeakingOption[];
-// }
-// interface SingleResponseQuestion extends BaseQuestion {
-//     type: "single_response";
-//     mandarin: MandarinPrompt;
-//     options: [SpeakingOption];
-   
-// }
-// interface ListeningMultipleChoiceQuestion extends BaseQuestion {
-//     type: "listening_mc";
-//     mandarin: MandarinPrompt & {
-//         words: Word[];
-//         breakdown: string;
-//     };
-//     options: listeningOption[];
-//     correctOptionId: number;
-// }
-// // interface Question {
-// //     id: number;
-// //     type: "multiple_choice" | "single_response";
-// //     mandarin: MandarinPrompt;
-// //     options: SpeakingOption[];
-// // }
-
-// export type Question = MultipleChoiceQuestion | SingleResponseQuestion | ListeningMultipleChoiceQuestion;
-// export const COURSE_DATA = courseData as unknown as CourseData;
+export const RANK_LABELS: Record<number, string> = {
+  0: "A1 · Beginner",
+  1: "A2 · Elementary",
+  2: "B1 · Intermediate",
+  3: "B2 · Upper-Intermediate",
+  4: "C1 · Advanced",
+};
