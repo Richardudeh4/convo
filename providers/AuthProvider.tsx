@@ -16,6 +16,11 @@ export default function AuthProvider({children}: PropsWithChildren){
     useEffect(() => {
         getAllProgress().then((progress) => setRank(computeRank(progress)));
     }, []);
+
+    const refreshRank = async () => {
+        const progress = await getAllProgress();
+        setRank(computeRank(progress));
+    };
     const loadProfile = async(s: Session | null ) => {
         if(!s){
             setProfile(null);
@@ -46,7 +51,7 @@ export default function AuthProvider({children}: PropsWithChildren){
 }, []);
 
 return (
-    <AuthContext.Provider value={{session, user: session?.user ?? null, profile, loading, isAdmin :false, isPremium, premiumExpiresAt, refreshProfile, rank}}>
+    <AuthContext.Provider value={{session, user: session?.user ?? null, profile, loading, isAdmin :false, isPremium, premiumExpiresAt, refreshProfile, refreshRank, rank}}>
         {children}
     </AuthContext.Provider>
 )

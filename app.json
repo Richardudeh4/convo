@@ -44,19 +44,7 @@
       ],
       "expo-secure-store",
       "expo-video",
-      [
-        "expo-av",
-        {
-          "microphonePermission": "Allow Convo to access your microphone so you can practice speaking Spanish."
-        }
-      ],
-      [
-        "expo-speech-recognition",
-        {
-          "microphonePermission": "Allow Convo to access your microphone so you can practice speaking Spanish.",
-          "speechRecognitionPermission": "Allow Convo to use speech recognition to check your Spanish pronunciation."
-        }
-      ]
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,60 +1,61 @@
-import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
+import * as Speech from "expo-speech";
+import { Platform, Vibration } from "react-native";
+import {
+  ensureAudioMode,
+  playOneShot,
+  preloadSoundAsset,
+} from "@/lib/audioSession";
 
 type AnswerSound = "correct" | "incorrect";
 
+/** Spanish nylon-guitar + castanet palette for in-lesson feedback */
 const SOUND_ASSETS = {
   correct: require("@/assets/sounds/correct.wav"),
   incorrect: require("@/assets/sounds/incorrect.wav"),
 } as const;
 
-let soundsReady = false;
-const sounds: Partial<Record<AnswerSound, Audio.Sound>> = {};
-
-async function ensureSoundsReady(): Promise<void> {
-  if (soundsReady) return;
-
-  await Audio.setAudioModeAsync({
-    playsInSilentModeIOS: true,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
-  });
-
-  const entries = await Promise.all(
-    (Object.keys(SOUND_ASSETS) as AnswerSound[]).map(async (type) => {
-      const { sound } = await Audio.Sound.createAsync(SOUND_ASSETS[type], {
-        shouldPlay: false,
-        volume: type === "correct" ? 1 : 0.9,
-      });
-      return [type, sound] as const;
-    }),
-  );
-
-  for (const [type, sound] of entries) {
-    sounds[type] = sound;
+function playAnswerHaptics(type: AnswerSound): void {
+  if (type === "correct") {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (Platform.OS === "android") {
+      Vibration.vibrate(40);
+    } else {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    return;
   }
 
-  soundsReady = true;
+  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  if (Platform.OS === "android") {
+    Vibration.vibrate([0, 60, 50, 60]);
+  } else {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    setTimeout(() => {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }, 120);
+  }
 }
 
 export function preloadAnswerSounds(): void {
-  void ensureSoundsReady();
+  void ensureAudioMode().then(() =>
+    Promise.all(
+      (Object.keys(SOUND_ASSETS) as AnswerSound[]).map((type) =>
+        preloadSoundAsset(SOUND_ASSETS[type]),
+      ),
+    ),
+  );
 }
 
 export async function playAnswerSound(type: AnswerSound): Promise<void> {
+  playAnswerHaptics(type);
+
   try {
-    await ensureSoundsReady();
-    const sound = sounds[type];
-    if (!sound) return;
-
-    await sound.setPositionAsync(0);
-    await sound.playAsync();
-
-    void Haptics.notificationAsync(
-      type === "correct"
-        ? Haptics.NotificationFeedbackType.Success
-        : Haptics.NotificationFeedbackType.Error,
-    );
+    if (await Speech.isSpeakingAsync()) {
+      await Speech.stop();
+    }
+    await ensureAudioMode();
+    await playOneShot(SOUND_ASSETS[type], type === "correct" ? 1 : 0.9);
   } catch (error) {
     if (__DEV__) {
       console.warn("[answerSounds] Failed to play sound:", error);

@@ -1,4 +1,4 @@
-import { Audio } from "expo-av";
+import { ensureAudioMode } from "@/lib/audioSession";
 import * as Speech from "expo-speech";
 import type { SpeechOptions, Voice } from "expo-speech";
 import { Platform } from "react-native";
@@ -87,13 +87,7 @@ async function getSpanishVoice(): Promise<Voice | undefined> {
 }
 
 async function ensurePlaybackAudioMode(): Promise<void> {
-  if (Platform.OS !== "android") return;
-  await Audio.setAudioModeAsync({
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: false,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
-  });
+  await ensureAudioMode();
 }
 
 function speakOnce(

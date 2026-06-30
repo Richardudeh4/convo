@@ -1,4 +1,4 @@
-import { Audio } from "expo-av";
+import { ensureAudioMode } from "@/lib/audioSession";
 import * as Speech from "expo-speech";
 import type { SpeechOptions } from "expo-speech";
 import { Platform } from "react-native";
@@ -44,14 +44,7 @@ async function getChineseVoiceId(): Promise<string | undefined> {
 }
 
 async function ensurePlaybackAudioMode(): Promise<void> {
-  if (Platform.OS !== "android") return;
-
-  await Audio.setAudioModeAsync({
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: false,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
-  });
+  await ensureAudioMode();
 }
 
 function speakOnce(

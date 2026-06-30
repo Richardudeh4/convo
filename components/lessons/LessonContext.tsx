@@ -1,23 +1,21 @@
 import { Question, SpeakingOption } from "@/constants/CourseData";
 import { Colors } from "@/constants/theme";
-import { evaluateSpanishAnswer } from "@/lib/spanishAnswerMatching";
-import {
-  abortSpanishRecognition,
-  requestSpeechRecognitionPermission,
-  startSpanishRecognition,
-  stopSpanishRecognition,
-} from "@/lib/spanishSpeechRecognition";
+import { useAuth } from "@/ctx/AuthContext";
 import { recordQuestionAnswered, recordQuestionListened } from "@/lib/speakingListeningStats";
 import { playAnswerSound, preloadAnswerSounds } from "@/lib/answerSounds";
+import {
+  getNextLessonId,
+  incrementLessonCompleted,
+} from "@/lib/lessonProgress";
 import { speakSpanish } from "@/lib/spanishSpeech";
 import { useRouter } from "expo-router";
 import * as Speech from "expo-speech";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, View } from "react-native";
-import { toast } from "sonner-native";
 import { ThemedText } from "../themed-text";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import AudioPrompt from "./AudioPrompt";
+import CompletionStars from "./CompletionStars";
 import MultipleChoiceMode from "./MultipleChoiceMode";
 import ProgressHeader from "./ProgressHeader";
 
@@ -36,6 +34,7 @@ export interface LessonStats {
   accuracy: number;
   wrongQuestions?: number;
 }
+
 export default function LessonContent({
   lessonId,
   questions,
@@ -44,6 +43,7 @@ export default function LessonContent({
   questions: Question[];
 }) {
   const router = useRouter();
+  const { refreshRank } = useAuth();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [exitConfirmVisible, setExitConfirmVisible] = useState(false);
   const [showMandarin, setShowMandarin] = useState(false);
@@ -53,8 +53,6 @@ export default function LessonContent({
   const [hasListenedToAudio, setHasListenedToAudio] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
-  const [isRecognizing, setIsRecognizing] = useState(false);
-  const [heardTranscript, setHeardTranscript] = useState("");
   const answerRevealAnim = useRef(new Animated.Value(0)).current;
   const currentQuestion = useMemo(
     () => questions[currentQuestionIndex],
@@ -63,8 +61,11 @@ export default function LessonContent({
   const [isSpeechPlaying, setIsSpeechPlaying] = useState(false);
   const isSpeechPlayingRef = useRef(false);
 
-  //Lesson completion
   const [showCompleteScreen, setShowCompleteScreen] = useState(false);
+  const [newStarCount, setNewStarCount] = useState(0);
+  const [completionSaved, setCompletionSaved] = useState(false);
+  const completeOverlayAnim = useRef(new Animated.Value(0)).current;
+  const nextLessonId = useMemo(() => getNextLessonId(lessonId), [lessonId]);
   const [lessonStats, setLessonStats] = useState<LessonStats | null>(null);
   const [questionAttempts, setQuestionAttempts] = useState<
     Record<number, number>
@@ -103,9 +104,7 @@ export default function LessonContent({
     setIsCorrect(false);
     setShowMandarin(false);
     setHasListenedToAudio(false);
-    setIsRecognizing(false);
     setIsLoading(false);
-    setHeardTranscript("");
     setAttemptCount(0);
     setHasStartedFirstPlay(false);
     optionSelectionAnimation.setValue(0);
@@ -139,14 +138,34 @@ export default function LessonContent({
   }, [currentQuestionIndex, questions.length, resetQuestionState]);
 
   useEffect(() => {
-    preloadAnswerSounds();
-  }, []);
+    if (!showCompleteScreen || completionSaved) {
+      return;
+    }
 
-  useEffect(() => {
-    return () => {
-      void abortSpanishRecognition();
+    const saveCompletion = async () => {
+      const count = await incrementLessonCompleted(lessonId);
+      setNewStarCount(count);
+      setCompletionSaved(true);
+      await refreshRank();
+      void playAnswerSound("correct");
+
+      completeOverlayAnim.setValue(0);
+      Animated.spring(completeOverlayAnim, {
+        toValue: 1,
+        friction: 7,
+        tension: 90,
+        useNativeDriver: true,
+      }).start();
     };
-  }, []);
+
+    void saveCompletion();
+  }, [
+    showCompleteScreen,
+    completionSaved,
+    lessonId,
+    refreshRank,
+    completeOverlayAnim,
+  ]);
 
   useEffect(() => {
     if (showResult) {
@@ -159,6 +178,20 @@ export default function LessonContent({
       void playAnswerSound(isCorrect ? "correct" : "incorrect");
     }
   }, [showResult, isCorrect, answerRevealAnim]);
+
+  useEffect(() => {
+    preloadAnswerSounds();
+  }, []);
+
+  const handleContinue = useCallback(() => {
+    router.replace({
+      pathname: "/lessons",
+      params: {
+        completedLessonId: lessonId,
+        ...(nextLessonId ? { advanceToLessonId: nextLessonId } : {}),
+      },
+    });
+  }, [lessonId, nextLessonId, router]);
 
   useEffect(() => {
     if (isSpeechPlaying && !hasStartedFirstPlay && !hasListenedToAudio) {
@@ -190,24 +223,16 @@ export default function LessonContent({
     }
   }, [isSpeechPlaying, hasStartedFirstPlay, hasListenedToAudio]);
 
-  // const handleOptionPress = useCallback(
-  //   (id: number) => {
-  //     if (isLoading || showResult || selectedOption !== null) return;
-  //     setSelectedOption(id);
-  //     Animated.timing(optionSelectionAnimation, {
-  //       toValue: 1,
-  //       duration: 300,
-  //       useNativeDriver: true,
-  //     }).start();
-  //   },
-  //   [isLoading, showResult, selectedOption, optionSelectionAnimation],
-  // );
-
-  const handleOptionPress = (id: number) => {
-    if (currentQuestion.type === "listening_mc") {
-      setSelectedOption(id);
-      setIsCorrect(id === currentQuestion.correctOptionId);
+  const submitAnswer = useCallback(
+    (matched: boolean) => {
+      setIsCorrect(matched);
       setShowResult(true);
+
+      if (matched) {
+        setCorrectAnswersCount((count) => count + 1);
+        void recordQuestionAnswered();
+      }
+
       Animated.sequence([
         Animated.timing(scaleAnim, {
           toValue: 1.05,
@@ -220,16 +245,44 @@ export default function LessonContent({
           useNativeDriver: true,
         }),
       ]).start();
+    },
+    [scaleAnim],
+  );
+
+  const handleOptionPress = (id: number) => {
+    if (isLoading || showResult) return;
+
+    if (currentQuestion.type === "listening_mc") {
+      const matched = id === currentQuestion.correctOptionId;
+      setSelectedOption(id);
+      submitAnswer(matched);
       return;
     }
-    const isDeselecting = selectedOption === id;
-    const newSelectedOption = isDeselecting ? null : id;
-    setSelectedOption(newSelectedOption);
-    Animated.timing(optionSelectionAnimation, {
-      toValue: isDeselecting ? 0 : 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
+
+    if (currentQuestion.type === "multiple_choice") {
+      const matched = id === currentQuestion.correctOptionId;
+      setSelectedOption(id);
+      Animated.timing(optionSelectionAnimation, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+      submitAnswer(matched);
+      if (!matched) {
+        setAttemptCount((count) => count + 1);
+      }
+      return;
+    }
+
+    if (currentQuestion.type === "single_response") {
+      setSelectedOption(id);
+      Animated.timing(optionSelectionAnimation, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+      submitAnswer(true);
+    }
   };
 
   const finishedListening = () => {
@@ -284,6 +337,7 @@ export default function LessonContent({
       setSpeechPlaying(false);
     }
   }, [currentQuestion, setSpeechPlaying]);
+
   const handleRevealMandarin = () => {
     if (showMandarin) {
       Animated.timing(fadeAnim, {
@@ -300,93 +354,6 @@ export default function LessonContent({
       }).start();
     }
   };
-
-  const handleStartRecord = useCallback(async () => {
-    if (
-      isRecognizing ||
-      selectedOption === null ||
-      !selectedSpeakingOption ||
-      isLoading ||
-      showResult ||
-      currentQuestion.type === "listening_mc"
-    ) {
-      return;
-    }
-
-    const granted = await requestSpeechRecognitionPermission();
-    if (!granted) {
-      toast.error("Microphone and speech recognition access are required.");
-      return;
-    }
-
-    try {
-      await abortSpanishRecognition();
-      await startSpanishRecognition(selectedSpeakingOption.target.text);
-      setIsRecognizing(true);
-      setHeardTranscript("");
-    } catch (error) {
-      console.error("Failed to start speech recognition:", error);
-      toast.error("Could not start listening. Please try again.");
-      setIsRecognizing(false);
-    }
-  }, [
-    currentQuestion.type,
-    isLoading,
-    isRecognizing,
-    selectedOption,
-    selectedSpeakingOption,
-    showResult,
-  ]);
-
-  const handleStopRecord = useCallback(async () => {
-    if (!isRecognizing || !selectedSpeakingOption) return;
-
-    setIsLoading(true);
-    try {
-      const transcript = await stopSpanishRecognition();
-      setIsRecognizing(false);
-      setHeardTranscript(transcript);
-
-      if (!transcript) {
-        toast.error("We couldn't hear you. Speak clearly and try again.");
-        return;
-      }
-
-      const { isCorrect: matched } = evaluateSpanishAnswer(
-        transcript,
-        selectedSpeakingOption.target.text,
-      );
-
-      setIsCorrect(matched);
-      setShowResult(true);
-
-      if (matched) {
-        setCorrectAnswersCount((count) => count + 1);
-        await recordQuestionAnswered();
-      } else {
-        setAttemptCount((count) => count + 1);
-      }
-
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.05,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } catch (error) {
-      console.error("Failed to process speech:", error);
-      toast.error("Could not check your answer. Please try again.");
-      setIsRecognizing(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isRecognizing, scaleAnim, selectedSpeakingOption]);
 
   return (
     <View style={styles.container}>
@@ -425,15 +392,11 @@ export default function LessonContent({
         >
           <AudioPrompt
             isPlaying={isSpeechPlaying}
-            isRecognizing={isRecognizing}
             hasListenedToAudio={hasListenedToAudio}
             onPlay={playAudio}
-            onStartRecord={handleStartRecord}
-            onStopRecord={handleStopRecord}
             onRevealMadarin={handleRevealMandarin}
             currentQuestion={currentQuestion}
             showMandarin={showMandarin}
-            selectedOption={selectedOption}
             scaleAmin={scaleAnim}
             instructionOpacity={instructionOpacity}
             listeningOpacity={listeningOpacity}
@@ -461,7 +424,7 @@ export default function LessonContent({
                 ],
               },
             ]}
-            pointerEvents={isLoading || showResult ? "none" : "auto"}
+            pointerEvents={isLoading ? "none" : "auto"}
           >
             {(currentQuestion.type === "multiple_choice" ||
               currentQuestion.type === "single_response" ||
@@ -473,6 +436,25 @@ export default function LessonContent({
                 optionSelectionAnimation={optionSelectionAnimation}
                 isLoading={isLoading}
                 showResult={showResult}
+                isCorrect={isCorrect}
+                onContinue={advanceQuestion}
+                onRetry={() => {
+                  setShowResult(false);
+                  setSelectedOption(null);
+                  optionSelectionAnimation.setValue(0);
+                }}
+                answerRevealAnim={answerRevealAnim}
+                feedback={
+                  currentQuestion.type === "listening_mc"
+                    ? { spanish: currentQuestion.target.text }
+                    : selectedSpeakingOption
+                      ? {
+                          english: selectedSpeakingOption.english,
+                          spanish: selectedSpeakingOption.target.text,
+                          romanization: selectedSpeakingOption.target.romanization,
+                        }
+                      : undefined
+                }
                 variant={
                   currentQuestion.type === "listening_mc"
                     ? "listening"
@@ -484,120 +466,43 @@ export default function LessonContent({
         )}
       </View>
 
-      {showResult && currentQuestion.type === "listening_mc" && (
-        <Animated.View
-          style={[
-            styles.feedbackWrapper,
-            {
-              opacity: answerRevealAnim,
-              transform: [
-                {
-                  translateY: answerRevealAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [20, 0],
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          <View style={styles.feedbackCard}>
-            <ThemedText
-              style={[
-                styles.resultLabel,
-                isCorrect ? styles.correctLabel : styles.incorrectLabel,
-              ]}
-            >
-              {isCorrect ? "Correct!" : "Not quite"}
-            </ThemedText>
-            <ThemedText style={styles.feedbackSpanish}>
-              {currentQuestion.target.text}
-            </ThemedText>
-            <Pressable style={styles.continueButton} onPress={advanceQuestion}>
-              <ThemedText style={styles.continueButtonText}>Continue</ThemedText>
-            </Pressable>
-          </View>
-        </Animated.View>
-      )}
-
-      {showResult && selectedSpeakingOption && (
-        <Animated.View
-          style={[
-            styles.feedbackWrapper,
-            {
-              opacity: answerRevealAnim,
-              transform: [
-                {
-                  translateY: answerRevealAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [20, 0],
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          <View style={styles.feedbackCard}>
-            <ThemedText
-              style={[
-                styles.resultLabel,
-                isCorrect ? styles.correctLabel : styles.incorrectLabel,
-              ]}
-            >
-              {isCorrect ? "Nice work!" : "Try again"}
-            </ThemedText>
-            <ThemedText style={styles.feedbackEnglish}>
-              {selectedSpeakingOption.english}
-            </ThemedText>
-            <ThemedText style={styles.feedbackSpanish}>
-              {selectedSpeakingOption.target.text}
-            </ThemedText>
-            {!isCorrect && heardTranscript ? (
-              <ThemedText style={styles.feedbackHeard}>
-                We heard: “{heardTranscript}”
-              </ThemedText>
-            ) : null}
-            <ThemedText style={styles.feedbackRomanization}>
-              {selectedSpeakingOption.target.romanization}
-            </ThemedText>
-            <Pressable
-              style={styles.continueButton}
-              onPress={
-                isCorrect
-                  ? advanceQuestion
-                  : () => {
-                      setShowResult(false);
-                      setHeardTranscript("");
-                    }
-              }
-            >
-              <ThemedText style={styles.continueButtonText}>
-                {isCorrect ? "Continue" : "Retry"}
-              </ThemedText>
-            </Pressable>
-          </View>
-        </Animated.View>
-      )}
-
       {showCompleteScreen && (
         <View style={styles.completeOverlay}>
-          <View style={styles.completeCard}>
+          <Animated.View
+            style={[
+              styles.completeCard,
+              {
+                opacity: completeOverlayAnim,
+                transform: [
+                  {
+                    scale: completeOverlayAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.85, 1],
+                    }),
+                  },
+                  {
+                    translateY: completeOverlayAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [40, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
             <ThemedText type="title" style={styles.completeTitle}>
               Lesson complete!
             </ThemedText>
             <ThemedText style={styles.completeSubtitle}>
-              You answered {correctAnswersCount} of {questions.length}{" "}
-              questions.
+              You answered {correctAnswersCount} of {questions.length} questions.
             </ThemedText>
-            <Pressable
-              style={styles.continueButton}
-              onPress={() => router.push("/lessons")}
-            >
-              <ThemedText style={styles.continueButtonText}>
-                Back to lessons
-              </ThemedText>
+            <View style={styles.completeStarsRow}>
+              <CompletionStars count={newStarCount} animateLatest />
+            </View>
+            <Pressable style={styles.continueButton} onPress={handleContinue}>
+              <ThemedText style={styles.continueButtonText}>Continue</ThemedText>
             </Pressable>
-          </View>
+          </Animated.View>
         </View>
       )}
     </View>
@@ -634,59 +539,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
   },
-  feedbackWrapper: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    zIndex: 1000,
-  },
-  feedbackCard: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    padding: 20,
-    alignItems: "center",
-  },
-  resultLabel: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  correctLabel: {
-    color: "#059669",
-  },
-  incorrectLabel: {
-    color: "#dc2626",
-  },
-  feedbackEnglish: {
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-    marginBottom: 4,
-  },
-  feedbackSpanish: {
-    fontSize: 22,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 4,
-  },
-  feedbackHeard: {
-    fontSize: 14,
-    color: "#9ca3af",
-    textAlign: "center",
-    marginBottom: 8,
-    fontStyle: "italic",
-  },
-  feedbackRomanization: {
-    fontSize: 14,
-    color: "#6b7280",
-    textAlign: "center",
-    marginBottom: 16,
-  },
   continueButton: {
     backgroundColor: Colors.primaryAccentColor,
     paddingVertical: 14,
@@ -722,6 +574,9 @@ const styles = StyleSheet.create({
   completeSubtitle: {
     color: "#6b7280",
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: 16,
+  },
+  completeStarsRow: {
+    marginBottom: 20,
   },
 });
