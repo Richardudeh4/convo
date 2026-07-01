@@ -18,7 +18,7 @@ export interface ConversationScenario {
   phrasebook?: PhrasebookEntry[];
 }
 
-interface PhrasebookEntry {
+export interface PhrasebookEntry {
   text: string;
   romanization: string;
   english: string;

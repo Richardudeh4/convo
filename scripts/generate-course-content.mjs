@@ -1022,6 +1022,16 @@ const scenarios = [
     goal: "Check in",
     tasks: ["State your name", "Ask about breakfast", "Ask for Wi-Fi"],
     difficulty: "Beginner",
+    phrasebook: [
+      { text: "Tengo una reserva.", romanization: "TEN-goh OO-nah reh-SEHR-bah", english: "I have a reservation." },
+      { text: "Me llamo Ana García.", romanization: "meh YAH-moh AH-nah gar-SEE-ah", english: "My name is Ana García." },
+      { text: "¿A qué hora es el desayuno?", romanization: "ah keh OH-rah es el deh-sah-YOO-noh", english: "What time is breakfast?" },
+      { text: "¿Está incluido el desayuno?", romanization: "es-TAH een-kloo-EE-doh el deh-sah-YOO-noh", english: "Is breakfast included?" },
+      { text: "¿Cuál es la contraseña del Wi-Fi?", romanization: "kwahl es lah kon-trah-SEH-nyah del WEE-fee", english: "What is the Wi-Fi password?" },
+      { text: "¿Hay Wi-Fi gratis?", romanization: "eye WEE-fee GRAH-tees", english: "Is there free Wi-Fi?" },
+      { text: "¿A qué hora es el check-out?", romanization: "ah keh OH-rah es el chek-owt", english: "What time is check-out?" },
+      { text: "Muchas gracias.", romanization: "MOO-chahs GRAH-syahs", english: "Thank you very much." },
+    ],
   },
   {
     id: "3",
@@ -1032,6 +1042,16 @@ const scenarios = [
     goal: "Buy a gift",
     tasks: ["Ask for a recommendation", "Ask for gift wrap", "Ask for price"],
     difficulty: "Intermediate",
+    phrasebook: [
+      { text: "Busco un regalo.", romanization: "BOOS-koh oon reh-GAH-loh", english: "I'm looking for a gift." },
+      { text: "¿Qué me recomienda?", romanization: "keh meh reh-koh-MYEN-dah", english: "What do you recommend?" },
+      { text: "¿Cuánto cuesta esto?", romanization: "KWAN-toh KWEHS-tah ES-toh", english: "How much does this cost?" },
+      { text: "¿Tiene algo más barato?", romanization: "TYEH-neh AHL-gah mahs BAH-rah-toh", english: "Do you have something cheaper?" },
+      { text: "¿Me lo puede envolver para regalo?", romanization: "meh loh PWEH-deh en-bol-VEHR", english: "Can you gift-wrap it?" },
+      { text: "¿Aceptan tarjeta?", romanization: "ah-SEP-tahn tar-HEH-tah", english: "Do you accept card?" },
+      { text: "Me lo llevo.", romanization: "meh loh YEH-boh", english: "I'll take it." },
+      { text: "Es para mi madre.", romanization: "es PAH-rah mee MAH-dreh", english: "It's for my mother." },
+    ],
   },
   {
     id: "4",
@@ -1042,6 +1062,16 @@ const scenarios = [
     goal: "Find the nearest metro station",
     tasks: ["Excuse yourself", "Ask where the metro is", "Ask how far"],
     difficulty: "Beginner",
+    phrasebook: [
+      { text: "Perdón.", romanization: "per-DOHN", english: "Excuse me." },
+      { text: "Disculpe.", romanization: "dees-KOOL-peh", english: "Excuse me. (formal)" },
+      { text: "¿Dónde está el metro?", romanization: "DOHN-deh es-TAH el MEH-troh", english: "Where is the metro?" },
+      { text: "¿Está lejos de aquí?", romanization: "es-TAH LEH-hohs deh ah-KEE", english: "Is it far from here?" },
+      { text: "¿Está cerca?", romanization: "es-TAH SEHR-kah", english: "Is it nearby?" },
+      { text: "¿Puede repetir, por favor?", romanization: "PWEH-deh reh-peh-TEER", english: "Can you repeat, please?" },
+      { text: "¿A la derecha o a la izquierda?", romanization: "ah lah deh-REH-chah oh ah lah ees-KYER-dah", english: "To the right or left?" },
+      { text: "Muchas gracias por su ayuda.", romanization: "MOO-chahs GRAH-syahs por soo ah-YOO-dah", english: "Thank you for your help." },
+    ],
   },
 ];
 

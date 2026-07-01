@@ -49,6 +49,8 @@ function RootLayoutNav() {
           <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="onboarding" />
+          <Stack.Screen name="practise" options={{ headerShown: false }} />
+          <Stack.Screen name="conversation" options={{ headerShown: false }} />
         </Stack>
         <Toaster />
         <StatusBar style={Platform.OS === "android" ? "dark" : "auto"} />
