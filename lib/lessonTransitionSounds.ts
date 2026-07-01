@@ -8,6 +8,7 @@ import {
   preloadSoundAsset,
   stopAndUnload,
 } from "@/lib/audioSession";
+import { getSettingsSync } from "@/lib/settings";
 
 /** Spanish rumba-guitar path transition palette */
 const SOUND_ASSETS = {
@@ -40,7 +41,15 @@ export async function preloadLessonTransitionSounds(): Promise<void> {
 
 /** Path transition: rumba bed + flamenco run → cajón unlock → chord advance */
 export async function playLessonPathTransition(hasNextLesson: boolean): Promise<void> {
-  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const { hapticsEnabled, soundEffectsEnabled } = getSettingsSync();
+
+  if (hapticsEnabled) {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }
+
+  if (!soundEffectsEnabled) {
+    return;
+  }
 
   if (await Speech.isSpeakingAsync()) {
     await Speech.stop();

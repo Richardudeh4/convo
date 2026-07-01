@@ -6,6 +6,7 @@ import {
   playOneShot,
   preloadSoundAsset,
 } from "@/lib/audioSession";
+import { getSettingsSync } from "@/lib/settings";
 
 type AnswerSound = "correct" | "incorrect";
 
@@ -16,6 +17,10 @@ const SOUND_ASSETS = {
 } as const;
 
 function playAnswerHaptics(type: AnswerSound): void {
+  if (!getSettingsSync().hapticsEnabled) {
+    return;
+  }
+
   if (type === "correct") {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     if (Platform.OS === "android") {
@@ -49,6 +54,10 @@ export function preloadAnswerSounds(): void {
 
 export async function playAnswerSound(type: AnswerSound): Promise<void> {
   playAnswerHaptics(type);
+
+  if (!getSettingsSync().soundEffectsEnabled) {
+    return;
+  }
 
   try {
     if (await Speech.isSpeakingAsync()) {

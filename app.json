@@ -45,7 +45,14 @@
       ],
       "expo-secure-store",
       "expo-video",
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Convo to access your photos to set your profile picture.",
+          "cameraPermission": "Allow Convo to use your camera to take a profile picture."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -11,6 +11,7 @@ type AuthContextType = {
     premiumExpiresAt: string | null;
     refreshProfile : () => Promise<void>;
     refreshRank: () => Promise<void>;
+    signOut: () => Promise<void>;
     /** 0=A1, 1=A2, 2=B1, 3=B2, 4=C1 — computed locally from lesson progress */
     rank: number;
 };
@@ -25,6 +26,7 @@ export const AuthContext = createContext<AuthContextType>({
     premiumExpiresAt:  null,
     refreshProfile : async () => {},
     refreshRank: async () => {},
+    signOut: async () => {},
     rank: 0,
 });
 

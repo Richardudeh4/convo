@@ -5,6 +5,7 @@ import {
   ScenarioChatResponse,
 } from "@/lib/conversationApi";
 import { recordConversationTurn } from "@/lib/speakingListeningStats";
+import { recordActivity } from "@/lib/streak";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const MAX_TURNS = 30;
@@ -59,6 +60,7 @@ export function useScenarioChat(scenario: ConversationScenario | undefined) {
       mergeTasks(response.completedTaskIndexes);
       setConversationComplete(response.conversationComplete);
       await recordConversationTurn();
+      void recordActivity();
     },
     [mergeTasks],
   );

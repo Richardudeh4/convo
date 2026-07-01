@@ -1,5 +1,6 @@
 import { AuthContext } from "@/ctx/AuthContext";
 import { getAllProgress, computeRank } from "@/lib/lessonProgress";
+import { loadSettings } from "@/lib/settings";
 import { supabase } from "@/utils/supabase";
 import { Session } from "@supabase/supabase-js";
 import { PropsWithChildren, useEffect, useState } from "react";
@@ -31,7 +32,14 @@ export default function AuthProvider({children}: PropsWithChildren){
     };
     const refreshProfile = () => loadProfile(session);
 
+    const signOut = async () => {
+        await supabase.auth.signOut();
+        setSession(null);
+        setProfile(null);
+    };
+
     useEffect(() => {
+        void loadSettings();
         const init = async () => {
             setLoading(true);
             const {data} = await supabase.auth.getSession();
@@ -51,7 +59,7 @@ export default function AuthProvider({children}: PropsWithChildren){
 }, []);
 
 return (
-    <AuthContext.Provider value={{session, user: session?.user ?? null, profile, loading, isAdmin :false, isPremium, premiumExpiresAt, refreshProfile, refreshRank, rank}}>
+    <AuthContext.Provider value={{session, user: session?.user ?? null, profile, loading, isAdmin :false, isPremium, premiumExpiresAt, refreshProfile, refreshRank, signOut, rank}}>
         {children}
     </AuthContext.Provider>
 )

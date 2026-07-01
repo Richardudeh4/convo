@@ -19,62 +19,7 @@ import { supabase } from "@/utils/supabase";
 import { useAuth } from "@/ctx/AuthContext";
 import { toast } from "sonner-native";
 import { Paywall } from "@/components/subscription/paywall";
-
-
-const LEVELS = [
-  {
-    id: "beginner",
-    title: "Beginner",
-    description: "I know a few words or nothing at all"
-  },
-  {
-    id: "intermediate",
-    title: "Intermediate",
-    description: "I can hold a conversation but I'm not fluent"
-  },
-  {
-    id: "Advanced",
-    title: "Advanced",
-    description: "I can hold a conversation and I'm fluent"
-  },
-]
-const MOTIVATIONS = [
-  {
-    id: "travel",
-    title: "Travel",
-    icon: "airplane-outline"
-  },
-  {
-    id: "work",
-    title: "Work",
-    icon: "briefcase-outline"
-  },
-  {
-    id: "family",
-    title: "Family",
-    icon: "people-outline"
-  },
-  {
-    id: "culture",
-    title: "Culture",
-    icon: "book-outline"
-  },
-  {
-    id: "hobby",
-    title: "Hobby",
-    icon: "game-controller-outline"
-  },
-]
-const INTERESTS = [
-  "Food & Dining",
-  "Business",
-  "Daily Life",
-  "Technology",
-  "Art",
-  "Music",
-  "Politics",
-  "Sports",
-];
+import { INTERESTS, LEVELS, MOTIVATIONS } from "@/constants/onboardingOptions";
 
 const Onboarding = () => {
   const colors = Colors["light"];
@@ -345,7 +290,7 @@ const toggleInterest = (interest: string) => {
           </TouchableOpacity>
         </View> */}
       </KeyboardAvoidingView>
-      <Paywall visible={showPaywall} onClose={() => {router.replace("/(tabs)")}}/>
+      <Paywall visible={showPaywall} onClose={() => { router.replace("/(tabs)/lessons"); }} />
     </SafeAreaView>
   );
 };

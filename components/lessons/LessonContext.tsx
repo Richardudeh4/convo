@@ -3,6 +3,7 @@ import { Colors } from "@/constants/theme";
 import { useAuth } from "@/ctx/AuthContext";
 import { recordQuestionAnswered, recordQuestionListened } from "@/lib/speakingListeningStats";
 import { playAnswerSound, preloadAnswerSounds } from "@/lib/answerSounds";
+import { recordActivity } from "@/lib/streak";
 import {
   getNextLessonId,
   incrementLessonCompleted,
@@ -147,6 +148,7 @@ export default function LessonContent({
       setNewStarCount(count);
       setCompletionSaved(true);
       await refreshRank();
+      void recordActivity();
       void playAnswerSound("correct");
 
       completeOverlayAnim.setValue(0);
